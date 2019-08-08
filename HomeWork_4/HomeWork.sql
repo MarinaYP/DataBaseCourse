@@ -1,48 +1,48 @@
---Создаем индексы
+--РЎРѕР·РґР°РµРј РёРЅРґРµРєСЃС‹
 --categories
-create index idx_categ_name on categories (name); --поиск по названию категории
+create index idx_categ_name on categories (name); --РїРѕРёСЃРє РїРѕ РЅР°Р·РІР°РЅРёСЋ РєР°С‚РµРіРѕСЂРёРё 
 --doc_details
-create index idx_doc_det_prod_count on doc_details (id_product, prod_count); --самый запрашиваемый товар
-create index idx_doc_det_prod_ship on doc_details (id_product, prod_shipped); --самый продаваемый товар или самый закупаемый
+create index idx_doc_det_prod_count on doc_details (id_product, prod_count); --СЃР°РјС‹Р№ Р·Р°РїСЂР°С€РёРІР°РµРјС‹Р№ С‚РѕРІР°СЂ
+create index idx_doc_det_prod_ship on doc_details (id_product, prod_shipped); --СЃР°РјС‹Р№ РїСЂРѕРґР°РІР°РµРјС‹Р№ С‚РѕРІР°СЂ РёР»Рё СЃР°РјС‹Р№ Р·Р°РєСѓРїР°РµРјС‹Р№
 --docs
-create index idx_docs_doc_numb on docs (doc_number) reverse; --необходим для поиска документов по номеру (номер в виде <префикс>_<номер>)
+create index idx_docs_doc_numb on docs (doc_number) reverse; --РЅРµРѕР±С…РѕРґРёРј РґР»СЏ РїРѕРёСЃРєР° РґРѕРєСѓРјРµРЅС‚РѕРІ РїРѕ РЅРѕРјРµСЂСѓ (РЅРѕРјРµСЂ РІ РІРёРґРµ <РїСЂРµС„РёРєСЃ>_<РЅРѕРјРµСЂ>)
 --history_prices
---индексы для получения истории цен по товару
-create index idx_his_pr_sel_pur_pr on history_prices (selling_price - purchase_price);--индекс на разницу цен
-create index idx_his_pr_prod_sel_pr on history_prices (id_prod_wh, selling_price); --индекс по товару на складе и цене продажи
-create index idx_his_pr_prod_pur_pr on history_prices (id_prod_wh, purchase_price); --индекс по товару на складе и цене поставки
+--РёРЅРґРµРєСЃС‹ РґР»СЏ РїРѕР»СѓС‡РµРЅРёСЏ РёСЃС‚РѕСЂРёРё С†РµРЅ РїРѕ С‚РѕРІР°СЂСѓ
+create index idx_his_pr_sel_pur_pr on history_prices (selling_price - purchase_price);--РёРЅРґРµРєСЃ РЅР° СЂР°Р·РЅРёС†Сѓ С†РµРЅ
+create index idx_his_pr_prod_sel_pr on history_prices (id_prod_wh, selling_price); --РёРЅРґРµРєСЃ РїРѕ С‚РѕРІР°СЂСѓ РЅР° СЃРєР»Р°РґРµ Рё С†РµРЅРµ РїСЂРѕРґР°Р¶Рё
+create index idx_his_pr_prod_pur_pr on history_prices (id_prod_wh, purchase_price); --РёРЅРґРµРєСЃ РїРѕ С‚РѕРІР°СЂСѓ РЅР° СЃРєР»Р°РґРµ Рё С†РµРЅРµ РїРѕСЃС‚Р°РІРєРё
 --individuals
-create bitmap index idx_individ_gender on individuals (gender);--значения только F или M
-create index idx_individ_dob on individuals (extract(year from date_of_birth)); -- делаем индекс по году
+create bitmap index idx_individ_gender on individuals (gender);--Р·РЅР°С‡РµРЅРёСЏ С‚РѕР»СЊРєРѕ F РёР»Рё M
+create index idx_individ_dob on individuals (extract(year from date_of_birth)); -- РґРµР»Р°РµРј РёРЅРґРµРєСЃ РїРѕ РіРѕРґСѓ
 --loyalty_program
-create unique index idx_loy_prog_code on loyalty_program (code); --купон должен быть уникальным
+create unique index idx_loy_prog_code on loyalty_program (code); --РєСѓРїРѕРЅ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СѓРЅРёРєР°Р»СЊРЅС‹Рј
 --loyprog_by_products
-create index idx_loypr_prod_prod_loy_act_date on loyprog_by_products (id_product, id_loyprog, actual_date); --по продукту, программе лояльности и дате актуальности (может быть несколько строчек, поэтому не уникальный)
-create index idx_loypr_prod_prod_amount on loyprog_by_products (id_product, amount); --товар, продаваемый с наибольшей скидкой
+create index idx_loypr_prod_prod_loy_act_date on loyprog_by_products (id_product, id_loyprog, actual_date); --РїРѕ РїСЂРѕРґСѓРєС‚Сѓ, РїСЂРѕРіСЂР°РјРјРµ Р»РѕСЏР»СЊРЅРѕСЃС‚Рё Рё РґР°С‚Рµ Р°РєС‚СѓР°Р»СЊРЅРѕСЃС‚Рё (РјРѕР¶РµС‚ Р±С‹С‚СЊ РЅРµСЃРєРѕР»СЊРєРѕ СЃС‚СЂРѕС‡РµРє, РїРѕСЌС‚РѕРјСѓ РЅРµ СѓРЅРёРєР°Р»СЊРЅС‹Р№)
+create index idx_loypr_prod_prod_amount on loyprog_by_products (id_product, amount); --С‚РѕРІР°СЂ, РїСЂРѕРґР°РІР°РµРјС‹Р№ СЃ РЅР°РёР±РѕР»СЊС€РµР№ СЃРєРёРґРєРѕР№
 --partners
---поиск юр.лиц по ИНН, ОГРН, названию
+--РїРѕРёСЃРє СЋСЂ.Р»РёС† РїРѕ РРќРќ, РћР“Р Рќ, РЅР°Р·РІР°РЅРёСЋ
 create index idx_partners_inn on partners (inn);
 create index idx_partners_ogrn on partners (ogrn);
 create index idx_partners_name on partners (name);
 --products
-create index idx_products_art on products (article); --для поиска по артиклу
-create index idx_products_name on products (name); --для поиска по названию
+create index idx_products_art on products (article); --РґР»СЏ РїРѕРёСЃРєР° РїРѕ Р°СЂС‚РёРєР»Сѓ
+create index idx_products_name on products (name); --РґР»СЏ РїРѕРёСЃРєР° РїРѕ РЅР°Р·РІР°РЅРёСЋ
 --products_by_spec
---поиск спецификаций по значению
+--РїРѕРёСЃРє СЃРїРµС†РёС„РёРєР°С†РёР№ РїРѕ Р·РЅР°С‡РµРЅРёСЋ
 create index idx_prod_by_spec_text on products_by_spec (text_value);
 create index idx_prod_by_spec_numb on products_by_spec (number_value);
 --products_in_warehouse
-create unique index idx_prod_in_wh_pro_wh_sup on products_in_warehouse (id_product, id_warehouse, id_supplier); --уникальность строчки
-create index idx_prod_in_wh_prod_pur_pr on products_in_warehouse (id_product, purchase_price); --товар и цена покупки
-create index idx_prod_in_wh_prod_sel_pr on products_in_warehouse (id_product, selling_price); -- товар и цена продажи
+create unique index idx_prod_in_wh_pro_wh_sup on products_in_warehouse (id_product, id_warehouse, id_supplier); --СѓРЅРёРєР°Р»СЊРЅРѕСЃС‚СЊ СЃС‚СЂРѕС‡РєРё
+create index idx_prod_in_wh_prod_pur_pr on products_in_warehouse (id_product, purchase_price); --С‚РѕРІР°СЂ Рё С†РµРЅР° РїРѕРєСѓРїРєРё
+create index idx_prod_in_wh_prod_sel_pr on products_in_warehouse (id_product, selling_price); -- С‚РѕРІР°СЂ Рё С†РµРЅР° РїСЂРѕРґР°Р¶Рё
 --specifications
-create bitmap index idx_spec_is_search on specifications (is_search); --значения только Y или N
+create bitmap index idx_spec_is_search on specifications (is_search); --Р·РЅР°С‡РµРЅРёСЏ С‚РѕР»СЊРєРѕ Y РёР»Рё N
 --users
-create unique index idx_users_login on users (login); -- логин пользователя должен быть уникальным
+create unique index idx_users_login on users (login); -- Р»РѕРіРёРЅ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СѓРЅРёРєР°Р»СЊРЅС‹Рј
 --warehouse
-create bitmap index  idx_wh_pickup on warehouse (pickup); --значения только Y или N
+create bitmap index  idx_wh_pickup on warehouse (pickup); --Р·РЅР°С‡РµРЅРёСЏ С‚РѕР»СЊРєРѕ Y РёР»Рё N
 -----------------------------------------------------------------------
---Создаем ограничения (здесь отражены дополнительные ограничения. NOT NULL создавались вместе с полями, их можно посмотреть в схеме БД (обязательные отмечены красной точкой) 
+--РЎРѕР·РґР°РµРј РѕРіСЂР°РЅРёС‡РµРЅРёСЏ (Р·РґРµСЃСЊ РѕС‚СЂР°Р¶РµРЅС‹ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅС‹Рµ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ. NOT NULL СЃРѕР·РґР°РІР°Р»РёСЃСЊ РІРјРµСЃС‚Рµ СЃ РїРѕР»СЏРјРё, РёС… РјРѕР¶РЅРѕ РїРѕСЃРјРѕС‚СЂРµС‚СЊ РІ СЃС…РµРјРµ Р‘Р” (РѕР±СЏР·Р°С‚РµР»СЊРЅС‹Рµ РѕС‚РјРµС‡РµРЅС‹ РєСЂР°СЃРЅРѕР№ С‚РѕС‡РєРѕР№) 
 --users
 ALTER TABLE USERS
 ADD CONSTRAINT chk_users_login CHECK (length(login) >= 5);
