@@ -1,7 +1,7 @@
 create or replace PACKAGE BODY PKG_MAIN AS
 
---*** Процедура предназначена для вставки или обновления шапки документа DOCS. 
---*** Переход между состояниями документа производится другой процедурой
+--*** РџСЂРѕС†РµРґСѓСЂР° РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅР° РґР»СЏ РІСЃС‚Р°РІРєРё РёР»Рё РѕР±РЅРѕРІР»РµРЅРёСЏ С€Р°РїРєРё РґРѕРєСѓРјРµРЅС‚Р° DOCS. 
+--*** РџРµСЂРµС…РѕРґ РјРµР¶РґСѓ СЃРѕСЃС‚РѕСЏРЅРёСЏРјРё РґРѕРєСѓРјРµРЅС‚Р° РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ РґСЂСѓРіРѕР№ РїСЂРѕС†РµРґСѓСЂРѕР№
   procedure WriteDOCS(pID DOCS.ID_DOC%type, pDocType DOCS.ID_DOCTYPE%type, pPartner PARTNERS.ID_PARTNER%type,
                       pWareHouse WAREHOUSE.ID_WAREHOUSE%type, pComments DOCS.COMMENTS%type, 
                       pIndividual INDIVIDUALS.ID_INDIVID%type, pPayType PAYTYPES.ID_PAYTYPE%type, 
@@ -19,9 +19,9 @@ create or replace PACKAGE BODY PKG_MAIN AS
         select * into DocRow from DOCS where ID_DOC = pID for update;
       end if;
       if DocRow.ID_DOCSTATE <> 1 /*NEW*/ then
-        mes := 'Документ находится не в Новом состоянии.';  
+        mes := 'Р”РѕРєСѓРјРµРЅС‚ РЅР°С…РѕРґРёС‚СЃСЏ РЅРµ РІ РќРѕРІРѕРј СЃРѕСЃС‚РѕСЏРЅРёРё.';  
       elsif (pID is not null) and (pDocType <> DocRow.ID_DOCTYPE) then
-        mes := 'Нельзя изменить тип документа.';
+        mes := 'РќРµР»СЊР·СЏ РёР·РјРµРЅРёС‚СЊ С‚РёРї РґРѕРєСѓРјРµРЅС‚Р°.';
       end if;
       if mes is not null then
         raise cannot_change;
@@ -41,19 +41,19 @@ create or replace PACKAGE BODY PKG_MAIN AS
     exception
       when no_data_found then
         rollback;
-        --*** в перспективе можно завести отдельную табличку на пользовательские ошибки с полями код и сообщение, и вытаскивать
-        raise_application_error (-20001, 'Документ с учетным номером ' || pID 
-          ||' или программа лояльности с учетным номером '|| pLoyProg ||' не найдены.');
+        --*** РІ РїРµСЂСЃРїРµРєС‚РёРІРµ РјРѕР¶РЅРѕ Р·Р°РІРµСЃС‚Рё РѕС‚РґРµР»СЊРЅСѓСЋ С‚Р°Р±Р»РёС‡РєСѓ РЅР° РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРёРµ РѕС€РёР±РєРё СЃ РїРѕР»СЏРјРё РєРѕРґ Рё СЃРѕРѕР±С‰РµРЅРёРµ, Рё РІС‹С‚Р°СЃРєРёРІР°С‚СЊ
+        raise_application_error (-20001, 'Р”РѕРєСѓРјРµРЅС‚ СЃ СѓС‡РµС‚РЅС‹Рј РЅРѕРјРµСЂРѕРј ' || pID 
+          ||' РёР»Рё РїСЂРѕРіСЂР°РјРјР° Р»РѕСЏР»СЊРЅРѕСЃС‚Рё СЃ СѓС‡РµС‚РЅС‹Рј РЅРѕРјРµСЂРѕРј '|| pLoyProg ||' РЅРµ РЅР°Р№РґРµРЅС‹.');
       when cannot_change then
         rollback;
-        raise_application_error (-20002, 'Ошибка изменения реквизитов документа. '||mes);
+        raise_application_error (-20002, 'РћС€РёР±РєР° РёР·РјРµРЅРµРЅРёСЏ СЂРµРєРІРёР·РёС‚РѕРІ РґРѕРєСѓРјРµРЅС‚Р°. '||mes);
       when others then
         rollback;
-        raise_application_error (-20003, 'Ошибка изменения документа. Обратитесь к разработчикам.');
+        raise_application_error (-20003, 'РћС€РёР±РєР° РёР·РјРµРЅРµРЅРёСЏ РґРѕРєСѓРјРµРЅС‚Р°. РћР±СЂР°С‚РёС‚РµСЃСЊ Рє СЂР°Р·СЂР°Р±РѕС‚С‡РёРєР°Рј.');
     end;    
   END WriteDOCS;
 
---*** Процедура предназначена для вставки и обновления данных детализации документа DOC_DETAILS
+--*** РџСЂРѕС†РµРґСѓСЂР° РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅР° РґР»СЏ РІСЃС‚Р°РІРєРё Рё РѕР±РЅРѕРІР»РµРЅРёСЏ РґР°РЅРЅС‹С… РґРµС‚Р°Р»РёР·Р°С†РёРё РґРѕРєСѓРјРµРЅС‚Р° DOC_DETAILS
   procedure WriteDOC_DETAILS (pIDDetail DOC_DETAILS.ID_DOCDETAIL%type, pID DOCS.ID_DOC%type, pProduct PRODUCTS.ID_PRODUCT%type,
                               pCount DOC_DETAILS.PROD_COUNT%type, pPrice DOC_DETAILS.FULL_PRICE%type, 
                               pPriceLoyProg DOC_DETAILS.PRICE_LOYPROG%type, pUserID USERS.USER_ID%type
@@ -66,10 +66,10 @@ create or replace PACKAGE BODY PKG_MAIN AS
     mes := null;
     begin
       if pID is null then
-        mes := 'Детализация должна быть привязана к документу!';
+        mes := 'Р”РµС‚Р°Р»РёР·Р°С†РёСЏ РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РїСЂРёРІСЏР·Р°РЅР° Рє РґРѕРєСѓРјРµРЅС‚Сѓ!';
       end if;
       if pProduct is null then
-        mes := 'Укажите продукт.';
+        mes := 'РЈРєР°Р¶РёС‚Рµ РїСЂРѕРґСѓРєС‚.';
       end if;
       if mes is not null then
         raise cannot_change;
@@ -92,149 +92,149 @@ create or replace PACKAGE BODY PKG_MAIN AS
     exception
       when no_data_found then
         rollback;
-        raise_application_error (-20004, 'Детализация документа с учетным номером ' || pIDDetail || ' не найдена.');
+        raise_application_error (-20004, 'Р”РµС‚Р°Р»РёР·Р°С†РёСЏ РґРѕРєСѓРјРµРЅС‚Р° СЃ СѓС‡РµС‚РЅС‹Рј РЅРѕРјРµСЂРѕРј ' || pIDDetail || ' РЅРµ РЅР°Р№РґРµРЅР°.');
       when cannot_change then
         rollback;
-        raise_application_error (-20005, 'Ошибка изменения детлаизации документа. '||mes); 
+        raise_application_error (-20005, 'РћС€РёР±РєР° РёР·РјРµРЅРµРЅРёСЏ РґРµС‚Р»Р°РёР·Р°С†РёРё РґРѕРєСѓРјРµРЅС‚Р°. '||mes); 
     end;
   END WriteDOC_DETAILS;
 
---*** Переход между состояниями документа
---*** Возврат документа возможен без возврата по складу ( то есть если документ еще не дошел до стадии изменения складких остатков)
---*** В противном случае изменение складских остатков производится с помощью документа Корректировка
---*** Также есть документы Возврат покупателя и Возврат поставщику
-  procedure TransferDocToState(pID DOCS.ID_DOC%type, pIDDocState DOCSTATES.ID_DOC_STATE%type /*ID нового состояния*/, 
+--*** РџРµСЂРµС…РѕРґ РјРµР¶РґСѓ СЃРѕСЃС‚РѕСЏРЅРёСЏРјРё РґРѕРєСѓРјРµРЅС‚Р°
+--*** Р’РѕР·РІСЂР°С‚ РґРѕРєСѓРјРµРЅС‚Р° РІРѕР·РјРѕР¶РµРЅ Р±РµР· РІРѕР·РІСЂР°С‚Р° РїРѕ СЃРєР»Р°РґСѓ ( С‚Рѕ РµСЃС‚СЊ РµСЃР»Рё РґРѕРєСѓРјРµРЅС‚ РµС‰Рµ РЅРµ РґРѕС€РµР» РґРѕ СЃС‚Р°РґРёРё РёР·РјРµРЅРµРЅРёСЏ СЃРєР»Р°РґРєРёС… РѕСЃС‚Р°С‚РєРѕРІ)
+--*** Р’ РїСЂРѕС‚РёРІРЅРѕРј СЃР»СѓС‡Р°Рµ РёР·РјРµРЅРµРЅРёРµ СЃРєР»Р°РґСЃРєРёС… РѕСЃС‚Р°С‚РєРѕРІ РїСЂРѕРёР·РІРѕРґРёС‚СЃСЏ СЃ РїРѕРјРѕС‰СЊСЋ РґРѕРєСѓРјРµРЅС‚Р° РљРѕСЂСЂРµРєС‚РёСЂРѕРІРєР°
+--*** РўР°РєР¶Рµ РµСЃС‚СЊ РґРѕРєСѓРјРµРЅС‚С‹ Р’РѕР·РІСЂР°С‚ РїРѕРєСѓРїР°С‚РµР»СЏ Рё Р’РѕР·РІСЂР°С‚ РїРѕСЃС‚Р°РІС‰РёРєСѓ
+  procedure TransferDocToState(pID DOCS.ID_DOC%type, pIDDocState DOCSTATES.ID_DOC_STATE%type /*ID РЅРѕРІРѕРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ*/, 
                                pUserID USERS.USER_ID%type) as
     NewDocState DOC_STATES_TYPES%rowtype;
     DocType DOCTYPES%rowtype;
     DocRow DOCS%rowtype;
     ProdInWH PRODUCTS_IN_WAREHOUSE%rowtype;
-    balance number; /*Остаток по строчке документа*/
-	pw_reserve number; /*Количество возможного резерва по данной строчке на складе*/
+    balance number; /*РћСЃС‚Р°С‚РѕРє РїРѕ СЃС‚СЂРѕС‡РєРµ РґРѕРєСѓРјРµРЅС‚Р°*/
+	pw_reserve number; /*РљРѕР»РёС‡РµСЃС‚РІРѕ РІРѕР·РјРѕР¶РЅРѕРіРѕ СЂРµР·РµСЂРІР° РїРѕ РґР°РЅРЅРѕР№ СЃС‚СЂРѕС‡РєРµ РЅР° СЃРєР»Р°РґРµ*/
   begin
     begin
       select * into DocRow from DOCS where ID_DOC = pID for update;
       select * into NewDocState from DOC_STATES_TYPES where ID_DOCSTATE = pIDDocState and ID_DOCTYPE = DocRow.ID_DOCTYPE;
       select * into DocType from DOCTYPES where ID_DOCTYPE = DocRow.ID_DOCTYPE;
       
-      --*** меняем состояние документа
+      --*** РјРµРЅСЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ РґРѕРєСѓРјРµРЅС‚Р°
       update DOCS set ID_DOCSTATE = pIDDocState where ID_DOC = pID;
       -------for DOC_DETAILS
-	  --*** для каждой строчки в детализации
+	  --*** РґР»СЏ РєР°Р¶РґРѕР№ СЃС‚СЂРѕС‡РєРё РІ РґРµС‚Р°Р»РёР·Р°С†РёРё
       for v in (select * from DOC_DETAILS where ID_DOC = pID for update) loop
-      --*** если состояние фиксированное , то:
+      --*** РµСЃР»Рё СЃРѕСЃС‚РѕСЏРЅРёРµ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРµ , С‚Рѕ:
         
-	------	ПРИХОД ТОВАРА (ПН или ВПок - возврат покупателя)
-		if  (NewDocState.IS_FIXED = 'Y') and (DocType.DOC_DIRECTION = 'P'/*приход товара*/) 
-		    and (DocType.DOCTYPE_CODE <> 'Кор')/*с Корректировкой отдельная ветка*/ then 
-        --***ищем строчку с товаром на складе и добавляем товар (если нет - создаем)
+	------	РџР РРҐРћР” РўРћР’РђР Рђ (РџРќ РёР»Рё Р’РџРѕРє - РІРѕР·РІСЂР°С‚ РїРѕРєСѓРїР°С‚РµР»СЏ)
+		if  (NewDocState.IS_FIXED = 'Y') and (DocType.DOC_DIRECTION = 'P'/*РїСЂРёС…РѕРґ С‚РѕРІР°СЂР°*/) 
+		    and (DocType.DOCTYPE_CODE <> 'РљРѕСЂ')/*СЃ РљРѕСЂСЂРµРєС‚РёСЂРѕРІРєРѕР№ РѕС‚РґРµР»СЊРЅР°СЏ РІРµС‚РєР°*/ then 
+        --***РёС‰РµРј СЃС‚СЂРѕС‡РєСѓ СЃ С‚РѕРІР°СЂРѕРј РЅР° СЃРєР»Р°РґРµ Рё РґРѕР±Р°РІР»СЏРµРј С‚РѕРІР°СЂ (РµСЃР»Рё РЅРµС‚ - СЃРѕР·РґР°РµРј)
           begin
             select * into ProdInWH 
             from PRODUCTS_IN_WAREHOUSE 
-            where ID_PRODUCT = v.ID_PRODUCT and ID_SUPPLIER /*поставщик*/ = DocRow.ID_PARTNER
+            where ID_PRODUCT = v.ID_PRODUCT and ID_SUPPLIER /*РїРѕСЃС‚Р°РІС‰РёРє*/ = DocRow.ID_PARTNER
               and ID_WAREHOUSE = DocRow.ID_WAREHOUSE for update;
-           --*** при изменении цены товара на складе срабатывает триггер на внесение изменений в таблицу история цен
+           --*** РїСЂРё РёР·РјРµРЅРµРЅРёРё С†РµРЅС‹ С‚РѕРІР°СЂР° РЅР° СЃРєР»Р°РґРµ СЃСЂР°Р±Р°С‚С‹РІР°РµС‚ С‚СЂРёРіРіРµСЂ РЅР° РІРЅРµСЃРµРЅРёРµ РёР·РјРµРЅРµРЅРёР№ РІ С‚Р°Р±Р»РёС†Сѓ РёСЃС‚РѕСЂРёСЏ С†РµРЅ
             update PRODUCTS_IN_WAREHOUSE pw
               set PROD_COUNT = PROD_COUNT + v.PROD_COUNT, PURCHASE_PRICE = v.PRICE_LOYPROG, USER_ID = pUserID
               where pw.ID_PROD_WH = ProdInWH.ID_PROD_WH ;
-           --*** заполняем движение товара (таблица как бы отражает по какому документу сколько товара оприходовано или зарезервировано)	
+           --*** Р·Р°РїРѕР»РЅСЏРµРј РґРІРёР¶РµРЅРёРµ С‚РѕРІР°СЂР° (С‚Р°Р±Р»РёС†Р° РєР°Рє Р±С‹ РѕС‚СЂР°Р¶Р°РµС‚ РїРѕ РєР°РєРѕРјСѓ РґРѕРєСѓРјРµРЅС‚Сѓ СЃРєРѕР»СЊРєРѕ С‚РѕРІР°СЂР° РѕРїСЂРёС…РѕРґРѕРІР°РЅРѕ РёР»Рё Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ)	
             insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
-			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, 0 /*резерв - только для расхода*/, 
-			           0 /*списанного нет*/, sysdate, pUserID);		   
+			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*РљРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂР° РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ!*/, 0 /*СЂРµР·РµСЂРІ - С‚РѕР»СЊРєРѕ РґР»СЏ СЂР°СЃС…РѕРґР°*/, 
+			           0 /*СЃРїРёСЃР°РЅРЅРѕРіРѕ РЅРµС‚*/, sysdate, pUserID);		   
           exception
             when no_data_found then
               insert into PRODUCTS_IN_WAREHOUSE(ID_PROD_WH, ID_PRODUCT, ID_WAREHOUSE, PROD_COUNT, ID_SUPPLIER, PURCHASE_PRICE, SELLING_PRICE, USER_ID)
                 values (seq_gen_prod_in_wh.nextval, v.ID_PRODUCT, DocRow.ID_WAREHOUSE, v.PROD_COUNT, DocRow.ID_PARTNER, v.PRICE_LOYPROG, v.PRICE_LOYPROG, pUserID);
-              --*** заполняем движение товара (таблица как бы отражает по какому документу сколько товара оприходовано или списано)	
+              --*** Р·Р°РїРѕР»РЅСЏРµРј РґРІРёР¶РµРЅРёРµ С‚РѕРІР°СЂР° (С‚Р°Р±Р»РёС†Р° РєР°Рє Р±С‹ РѕС‚СЂР°Р¶Р°РµС‚ РїРѕ РєР°РєРѕРјСѓ РґРѕРєСѓРјРµРЅС‚Сѓ СЃРєРѕР»СЊРєРѕ С‚РѕРІР°СЂР° РѕРїСЂРёС…РѕРґРѕРІР°РЅРѕ РёР»Рё СЃРїРёСЃР°РЅРѕ)	
               insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
-			    values(seq_gen_prod_in_wh.currval, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, 
-				         0 /*резерв - только для расхода*/, 0 /*списанного нет*/, sysdate, pUserID);					
+			    values(seq_gen_prod_in_wh.currval, v.ID_DOCDETAIL, v.PROD_COUNT /*РљРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂР° РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ!*/, 
+				         0 /*СЂРµР·РµСЂРІ - С‚РѕР»СЊРєРѕ РґР»СЏ СЂР°СЃС…РѕРґР°*/, 0 /*СЃРїРёСЃР°РЅРЅРѕРіРѕ РЅРµС‚*/, sysdate, pUserID);					
             when too_many_rows then
               rollback;
-              raise_application_error (-20007, 'Произошло задвоение строчек на складе (уч.номер) '||DocRow.ID_WAREHOUSE||
-                  ' с продуктом (уч.номер) '||v.ID_PRODUCT||' и поставщиком (уч.номер)'||DocRow.ID_PARTNER);
+              raise_application_error (-20007, 'РџСЂРѕРёР·РѕС€Р»Рѕ Р·Р°РґРІРѕРµРЅРёРµ СЃС‚СЂРѕС‡РµРє РЅР° СЃРєР»Р°РґРµ (СѓС‡.РЅРѕРјРµСЂ) '||DocRow.ID_WAREHOUSE||
+                  ' СЃ РїСЂРѕРґСѓРєС‚РѕРј (СѓС‡.РЅРѕРјРµСЂ) '||v.ID_PRODUCT||' Рё РїРѕСЃС‚Р°РІС‰РёРєРѕРј (СѓС‡.РЅРѕРјРµСЂ)'||DocRow.ID_PARTNER);
           end;
 		  
-	------	РАСХОД ТОВАРА - резерв  (документы ЗПок, ВПст.)
-        elsif (NewDocState.IS_FIXED = 'R') and (DocType.DOC_DIRECTION = 'R'/*расход товара*/)
-             and (DocType.DOCTYPE_CODE <> 'Кор')/*с Корректировкой отдельная ветка*/ then
-          --*** перевести нужное количество товара в резерв
+	------	Р РђРЎРҐРћР” РўРћР’РђР Рђ - СЂРµР·РµСЂРІ  (РґРѕРєСѓРјРµРЅС‚С‹ Р—РџРѕРє, Р’РџСЃС‚.)
+        elsif (NewDocState.IS_FIXED = 'R') and (DocType.DOC_DIRECTION = 'R'/*СЂР°СЃС…РѕРґ С‚РѕРІР°СЂР°*/)
+             and (DocType.DOCTYPE_CODE <> 'РљРѕСЂ')/*СЃ РљРѕСЂСЂРµРєС‚РёСЂРѕРІРєРѕР№ РѕС‚РґРµР»СЊРЅР°СЏ РІРµС‚РєР°*/ then
+          --*** РїРµСЂРµРІРµСЃС‚Рё РЅСѓР¶РЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂР° РІ СЂРµР·РµСЂРІ
           balance := v.prod_count - v.prod_shipped - v.prod_reserve;
-		  if balance <= 0 then --*** сколько осталось дорезервировать
-		    dbms_output.put_line('Количество запрашиваемого товара для резерва должно быть больше нуля!');
+		  if balance <= 0 then --*** СЃРєРѕР»СЊРєРѕ РѕСЃС‚Р°Р»РѕСЃСЊ РґРѕСЂРµР·РµСЂРІРёСЂРѕРІР°С‚СЊ
+		    dbms_output.put_line('РљРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїСЂР°С€РёРІР°РµРјРѕРіРѕ С‚РѕРІР°СЂР° РґР»СЏ СЂРµР·РµСЂРІР° РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ Р±РѕР»СЊС€Рµ РЅСѓР»СЏ!');
 			return;
 		  end if;
 		  
-		  --*** Находим строчки на складе по Складу в документе, продукту (производитель уже заложен в ID) и по заявленной  документе цене (мы другую не можем выбрать)
+		  --*** РќР°С…РѕРґРёРј СЃС‚СЂРѕС‡РєРё РЅР° СЃРєР»Р°РґРµ РїРѕ РЎРєР»Р°РґСѓ РІ РґРѕРєСѓРјРµРЅС‚Рµ, РїСЂРѕРґСѓРєС‚Сѓ (РїСЂРѕРёР·РІРѕРґРёС‚РµР»СЊ СѓР¶Рµ Р·Р°Р»РѕР¶РµРЅ РІ ID) Рё РїРѕ Р·Р°СЏРІР»РµРЅРЅРѕР№  РґРѕРєСѓРјРµРЅС‚Рµ С†РµРЅРµ (РјС‹ РґСЂСѓРіСѓСЋ РЅРµ РјРѕР¶РµРј РІС‹Р±СЂР°С‚СЊ)
 		  for ss in (select * from PRODUCTS_IN_WAREHOUSE pw where pw.ID_WAREHOUSE = DocRow.ID_WAREHOUSE and pw.ID_PRODUCT = v.ID_PRODUCT
 		               and v.full_price = pw.selling_price order by pw.change_date asc) loop
 			if balance <= 0 then exit; end if;
-			pw_reserve := 0; --*** сколько по данной строчке склада будет товара
+			pw_reserve := 0; --*** СЃРєРѕР»СЊРєРѕ РїРѕ РґР°РЅРЅРѕР№ СЃС‚СЂРѕС‡РєРµ СЃРєР»Р°РґР° Р±СѓРґРµС‚ С‚РѕРІР°СЂР°
 			
-			--*** вычисляем сколько можно зарезервировать по данной складской строчке		   
+			--*** РІС‹С‡РёСЃР»СЏРµРј СЃРєРѕР»СЊРєРѕ РјРѕР¶РЅРѕ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°С‚СЊ РїРѕ РґР°РЅРЅРѕР№ СЃРєР»Р°РґСЃРєРѕР№ СЃС‚СЂРѕС‡РєРµ		   
 		    if ss.prod_count - ss.prod_reserve >= balance then
 			  pw_reserve := balance;
 			else pw_reserve := ss.prod_count - ss.prod_reserve;
 			end if;
 			
-			--*** резервируем количество на складе
+			--*** СЂРµР·РµСЂРІРёСЂСѓРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РЅР° СЃРєР»Р°РґРµ
 			update PRODUCTS_IN_WAREHOUSE pw set prod_reserve = prod_reserve + pw_reserve where ProdInWH.ID_PROD_WH = ss.ID_PROD_WH;
-			--*** сразу переводим в резерв в документе
+			--*** СЃСЂР°Р·Сѓ РїРµСЂРµРІРѕРґРёРј РІ СЂРµР·РµСЂРІ РІ РґРѕРєСѓРјРµРЅС‚Рµ
 			update DOC_DETAILS dd set prod_reserve = prod_reserve + pw_reserve where ID_DOCDETAIL = v.ID_DOCDETAIL;
-			--*** заполняем движение товара (таблица как бы отражает по какому документу сколько товара оприходовано или зарезервировано)	
+			--*** Р·Р°РїРѕР»РЅСЏРµРј РґРІРёР¶РµРЅРёРµ С‚РѕРІР°СЂР° (С‚Р°Р±Р»РёС†Р° РєР°Рє Р±С‹ РѕС‚СЂР°Р¶Р°РµС‚ РїРѕ РєР°РєРѕРјСѓ РґРѕРєСѓРјРµРЅС‚Сѓ СЃРєРѕР»СЊРєРѕ С‚РѕРІР°СЂР° РѕРїСЂРёС…РѕРґРѕРІР°РЅРѕ РёР»Рё Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ)	
             insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
-			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, pw_reserve /*резерв по документу*/, 
-			           0 /*ничего не списано*/, sysdate, pUserID);
+			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*РљРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂР° РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ!*/, pw_reserve /*СЂРµР·РµСЂРІ РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ*/, 
+			           0 /*РЅРёС‡РµРіРѕ РЅРµ СЃРїРёСЃР°РЅРѕ*/, sysdate, pUserID);
 			
 			balance := balance - pw_reserve;
 		  end loop; --for ss
 		  if balance > 0 then 
-		    dbms_output.put_line('Не весь товар удалось зарезервировать! Осталось дорезервировать товара: '||balance);
+		    dbms_output.put_line('РќРµ РІРµСЃСЊ С‚РѕРІР°СЂ СѓРґР°Р»РѕСЃСЊ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°С‚СЊ! РћСЃС‚Р°Р»РѕСЃСЊ РґРѕСЂРµР·РµСЂРІРёСЂРѕРІР°С‚СЊ С‚РѕРІР°СЂР°: '||balance);
 		  end if;
     
-	-------РАСХОД ТОВАРА - списание (документы: РН, ВПст)
-        elsif (NewDocState.IS_FIXED = 'Y') and (DocType.DOC_DIRECTION = 'R'/*расход товара*/) 
-		  and (DocType.DOCTYPE_CODE <> 'Кор')/*с Корректировкой отдельная ветка*/ then
-        --*** ищем строчку с товаром на складе и убавляем товар. Если нет строчки и не хватает товара - ошибка + ищем резерв
-          balance := v.prod_reserve; --*** отгружаем только количество в резерве
-		  if balance <= 0 then --*** нет товара для отгрузки
+	-------Р РђРЎРҐРћР” РўРћР’РђР Рђ - СЃРїРёСЃР°РЅРёРµ (РґРѕРєСѓРјРµРЅС‚С‹: Р Рќ, Р’РџСЃС‚)
+        elsif (NewDocState.IS_FIXED = 'Y') and (DocType.DOC_DIRECTION = 'R'/*СЂР°СЃС…РѕРґ С‚РѕРІР°СЂР°*/) 
+		  and (DocType.DOCTYPE_CODE <> 'РљРѕСЂ')/*СЃ РљРѕСЂСЂРµРєС‚РёСЂРѕРІРєРѕР№ РѕС‚РґРµР»СЊРЅР°СЏ РІРµС‚РєР°*/ then
+        --*** РёС‰РµРј СЃС‚СЂРѕС‡РєСѓ СЃ С‚РѕРІР°СЂРѕРј РЅР° СЃРєР»Р°РґРµ Рё СѓР±Р°РІР»СЏРµРј С‚РѕРІР°СЂ. Р•СЃР»Рё РЅРµС‚ СЃС‚СЂРѕС‡РєРё Рё РЅРµ С…РІР°С‚Р°РµС‚ С‚РѕРІР°СЂР° - РѕС€РёР±РєР° + РёС‰РµРј СЂРµР·РµСЂРІ
+          balance := v.prod_reserve; --*** РѕС‚РіСЂСѓР¶Р°РµРј С‚РѕР»СЊРєРѕ РєРѕР»РёС‡РµСЃС‚РІРѕ РІ СЂРµР·РµСЂРІРµ
+		  if balance <= 0 then --*** РЅРµС‚ С‚РѕРІР°СЂР° РґР»СЏ РѕС‚РіСЂСѓР·РєРё
 		    rollback;
-		    raise_application_error(-20001, 'Нет зарезервированного товара для отгрузки!');
+		    raise_application_error(-20001, 'РќРµС‚ Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРЅРѕРіРѕ С‚РѕРІР°СЂР° РґР»СЏ РѕС‚РіСЂСѓР·РєРё!');
 		  end if;
-		  --*** выбираем строчки склада с резервом
+		  --*** РІС‹Р±РёСЂР°РµРј СЃС‚СЂРѕС‡РєРё СЃРєР»Р°РґР° СЃ СЂРµР·РµСЂРІРѕРј
 		  for ss in (select * from PRODUCTS_IN_WAREHOUSE pw where pw.ID_WAREHOUSE = DocRow.ID_WAREHOUSE and pw.ID_PRODUCT = v.ID_PRODUCT
 		               and v.full_price = pw.selling_price and pw.prod_reserve > 0 order by pw.change_date asc) loop
 					   
 			if balance <= 0 then exit; end if;
-			pw_reserve := 0; --*** сколько по данной строчке склада будет товара
+			pw_reserve := 0; --*** СЃРєРѕР»СЊРєРѕ РїРѕ РґР°РЅРЅРѕР№ СЃС‚СЂРѕС‡РєРµ СЃРєР»Р°РґР° Р±СѓРґРµС‚ С‚РѕРІР°СЂР°
 			
-			--*** вычисляем сколько можно отгрузить по данной складской строчке		   
+			--*** РІС‹С‡РёСЃР»СЏРµРј СЃРєРѕР»СЊРєРѕ РјРѕР¶РЅРѕ РѕС‚РіСЂСѓР·РёС‚СЊ РїРѕ РґР°РЅРЅРѕР№ СЃРєР»Р°РґСЃРєРѕР№ СЃС‚СЂРѕС‡РєРµ		   
 		    if ss.prod_reserve >= balance then
 			  pw_reserve := balance;
 			else pw_reserve := ss.prod_reserve;
 			end if;
 			
-			--*** отгружаем количество на складе
+			--*** РѕС‚РіСЂСѓР¶Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РЅР° СЃРєР»Р°РґРµ
 			update PRODUCTS_IN_WAREHOUSE pw set prod_reserve = prod_reserve - pw_reserve, 
 			                                    prod_count = prod_count - pw_reserve
 			  where pw.ID_PROD_WH = ss.ID_PROD_WH;
-			--*** сразу отгружаем в документе
+			--*** СЃСЂР°Р·Сѓ РѕС‚РіСЂСѓР¶Р°РµРј РІ РґРѕРєСѓРјРµРЅС‚Рµ
 			update DOC_DETAILS dd set prod_reserve = prod_reserve - pw_reserve, prod_shipped = prod_shipped + pw_reserve where ID_DOCDETAIL = v.ID_DOCDETAIL;
-			--*** заполняем движение товара (таблица как бы отражает по какому документу сколько товара оприходовано или зарезервировано)	
+			--*** Р·Р°РїРѕР»РЅСЏРµРј РґРІРёР¶РµРЅРёРµ С‚РѕРІР°СЂР° (С‚Р°Р±Р»РёС†Р° РєР°Рє Р±С‹ РѕС‚СЂР°Р¶Р°РµС‚ РїРѕ РєР°РєРѕРјСѓ РґРѕРєСѓРјРµРЅС‚Сѓ СЃРєРѕР»СЊРєРѕ С‚РѕРІР°СЂР° РѕРїСЂРёС…РѕРґРѕРІР°РЅРѕ РёР»Рё Р·Р°СЂРµР·РµСЂРІРёСЂРѕРІР°РЅРѕ)	
             insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
-			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, pw_reserve /*резерв по документу*/, 
-			           pw_reserve /*списано по идее - столько же, сколько и в резерве*/, sysdate, pUserID);
+			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*РљРѕР»РёС‡РµСЃС‚РІРѕ С‚РѕРІР°СЂР° РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ!*/, pw_reserve /*СЂРµР·РµСЂРІ РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ*/, 
+			           pw_reserve /*СЃРїРёСЃР°РЅРѕ РїРѕ РёРґРµРµ - СЃС‚РѕР»СЊРєРѕ Р¶Рµ, СЃРєРѕР»СЊРєРѕ Рё РІ СЂРµР·РµСЂРІРµ*/, sysdate, pUserID);
 			
 			balance := balance - pw_reserve;
 	      end loop; --for ss
 		  
-		  --*** когда не все отгружено, то ошибка, чтобы оповестить менеджера! При этом откат, тк списывать нельзя часть.
+		  --*** РєРѕРіРґР° РЅРµ РІСЃРµ РѕС‚РіСЂСѓР¶РµРЅРѕ, С‚Рѕ РѕС€РёР±РєР°, С‡С‚РѕР±С‹ РѕРїРѕРІРµСЃС‚РёС‚СЊ РјРµРЅРµРґР¶РµСЂР°! РџСЂРё СЌС‚РѕРј РѕС‚РєР°С‚, С‚Рє СЃРїРёСЃС‹РІР°С‚СЊ РЅРµР»СЊР·СЏ С‡Р°СЃС‚СЊ.
 		  if balance > 0 then 
 		    rollback;
-		    raise_application_error(-20002, 'Не весь товар удалось отгрузить! Осталось догрузить товара: '||balance);
+		    raise_application_error(-20002, 'РќРµ РІРµСЃСЊ С‚РѕРІР°СЂ СѓРґР°Р»РѕСЃСЊ РѕС‚РіСЂСѓР·РёС‚СЊ! РћСЃС‚Р°Р»РѕСЃСЊ РґРѕРіСЂСѓР·РёС‚СЊ С‚РѕРІР°СЂР°: '||balance);
 		  end if;
 		  
-		elsif (DocType.DOCTYPE_CODE = 'Кор')/*с Корректировкой отдельная ветка*/  then
+		elsif (DocType.DOCTYPE_CODE = 'РљРѕСЂ')/*СЃ РљРѕСЂСЂРµРєС‚РёСЂРѕРІРєРѕР№ РѕС‚РґРµР»СЊРЅР°СЏ РІРµС‚РєР°*/  then
          
          null;
         end if;
@@ -243,7 +243,7 @@ create or replace PACKAGE BODY PKG_MAIN AS
     exception
       when no_data_found then
       rollback;
-      raise_application_error (-20006, 'Данные по документу или состоянию не найдены.');
+      raise_application_error (-20006, 'Р”Р°РЅРЅС‹Рµ РїРѕ РґРѕРєСѓРјРµРЅС‚Сѓ РёР»Рё СЃРѕСЃС‚РѕСЏРЅРёСЋ РЅРµ РЅР°Р№РґРµРЅС‹.');
     end;
   end TransferDocToState;
 END PKG_MAIN;

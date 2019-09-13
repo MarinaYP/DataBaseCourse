@@ -1,7 +1,7 @@
 CREATE OR REPLACE TRIGGER TAU_PRODUCTS_IN_WH 
 AFTER UPDATE ON PRODUCTS_IN_WAREHOUSE 
 for each row
---*** триггер нужен для ведения истории цен
+--*** С‚СЂРёРіРіРµСЂ РЅСѓР¶РµРЅ РґР»СЏ РІРµРґРµРЅРёСЏ РёСЃС‚РѕСЂРёРё С†РµРЅ
 BEGIN
   if (:old.purchase_price <> :new.purchase_price)
     or (:old.selling_price <> :new.selling_price) then

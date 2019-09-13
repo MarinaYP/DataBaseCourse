@@ -3,12 +3,12 @@ BEFORE INSERT ON DOC_STATES_TYPES
 for each row
 declare
 cnt number;
---*** предназначен для контроля, что фиксированное состояние у конкретного типа документа только одно!
+--*** РїСЂРµРґРЅР°Р·РЅР°С‡РµРЅ РґР»СЏ РєРѕРЅС‚СЂРѕР»СЏ, С‡С‚Рѕ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ Сѓ РєРѕРЅРєСЂРµС‚РЅРѕРіРѕ С‚РёРїР° РґРѕРєСѓРјРµРЅС‚Р° С‚РѕР»СЊРєРѕ РѕРґРЅРѕ!
 BEGIN
   if :new.is_fixed = 'Y' then
     select count(*) into cnt from doc_states_types where id_doctype = :new.id_doctype and is_fixed = 'Y'; 
     if cnt > 0 then 
-      raise_application_error(-20001, 'Нельзя вставить еще одно фиксированное значение для типа документа: '||:new.id_doctype);
+      raise_application_error(-20001, 'РќРµР»СЊР·СЏ РІСЃС‚Р°РІРёС‚СЊ РµС‰Рµ РѕРґРЅРѕ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РґР»СЏ С‚РёРїР° РґРѕРєСѓРјРµРЅС‚Р°: '||:new.id_doctype);
     end if;
   end if;
 END;

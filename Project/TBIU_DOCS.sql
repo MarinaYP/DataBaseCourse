@@ -8,32 +8,32 @@ declare
 BEGIN
   begin
     if inserting then
-    --*** проставлЯет ID и номер документа и заполнЯем полЯ по умолчанию
+    --*** РїСЂРѕСЃС‚Р°РІР»СЏРµС‚ ID Рё РЅРѕРјРµСЂ РґРѕРєСѓРјРµРЅС‚Р° Рё Р·Р°РїРѕР»РЅСЏРµРј РїРѕР»СЏ РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ
       if :new.ID_DOC is null then 
        :new.ID_DOC := seq_gen_DOCS.nextval;
       end if;
       select DOCTYPE_CODE ||'_'||:new.ID_DOC into :new.DOC_NUMBER from DOCTYPES where ID_DOCTYPE = :new.ID_DOCTYPE;
-      :new.ID_DOCSTATE := 1; /*Ќовый*/
+      :new.ID_DOCSTATE := 1; /*РќРѕРІС‹Р№*/
       :new.DOC_SUM := 0;
       :new.DOC_SUM_LOYPROG := 0;
     end if;
 
     if updating then 
-    --*** ‚ычислЯем сумму по детализации документа по полной стоимости DOC_SUM и сумму по программе лоЯльности DOC_SUM_LOYPROG
+    --*** Р’С‹С‡РёСЃР»СЏРµРј СЃСѓРјРјСѓ РїРѕ РґРµС‚Р°Р»РёР·Р°С†РёРё РґРѕРєСѓРјРµРЅС‚Р° РїРѕ РїРѕР»РЅРѕР№ СЃС‚РѕРёРјРѕСЃС‚Рё DOC_SUM Рё СЃСѓРјРјСѓ РїРѕ РїСЂРѕРіСЂР°РјРјРµ Р»РѕСЏР»СЊРЅРѕСЃС‚Рё DOC_SUM_LOYPROG
       select SUM(FULL_PRICE * PROD_COUNT), SUM(PRICE_LOYPROG * PROD_COUNT) into :new.DOC_SUM, :new.DOC_SUM_LOYPROG
         from DOC_DETAILS where ID_DOC = :new.ID_DOC;
-      --*** „лЯ фиксированного состоЯниЯ документа проставляем дату фиксации (фиксированное состоЯние для каждого документа только одно!)
+      --*** Р”Р»СЏ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРіРѕ СЃРѕСЃС‚РѕСЏРЅРёСЏ РґРѕРєСѓРјРµРЅС‚Р° РїСЂРѕСЃС‚Р°РІР»В¤РµРј РґР°С‚Сѓ С„РёРєСЃР°С†РёРё (С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ РґР»В¤ РєР°Р¶РґРѕРіРѕ РґРѕРєСѓРјРµРЅС‚Р° С‚РѕР»СЊРєРѕ РѕРґРЅРѕ!)
       select count(ID_DOCSTATE) into cnt
         from DOC_STATES_TYPES where ID_DOCTYPE = :new.ID_DOCTYPE and IS_FIXED = 'Y';
-      if (cnt > 0 /*состоЯние фиксированное*/) and (:new.ID_DOCSTATE <> :old.ID_DOCSTATE) then :new.DOC_FIXED_DATE := sysdate;
+      if (cnt > 0 /*СЃРѕСЃС‚РѕСЏРЅРёРµ С„РёРєСЃРёСЂРѕРІР°РЅРЅРѕРµ*/) and (:new.ID_DOCSTATE <> :old.ID_DOCSTATE) then :new.DOC_FIXED_DATE := sysdate;
       end if;
     end if;
     
-    --*** подстановка кода и размера программы лоЯльности в документ
+    --*** РїРѕРґСЃС‚Р°РЅРѕРІРєР° РєРѕРґР° Рё СЂР°Р·РјРµСЂР° РїСЂРѕРіСЂР°РјРјС‹ Р»РѕСЏР»СЊРЅРѕСЃС‚Рё РІ РґРѕРєСѓРјРµРЅС‚
     select * into pLoyProg from LOYALTY_PROGRAM where ID_LOYPROG = :new.ID_LOYPROG and APPLY_TO_DOCS = 'Y';
     :new.AMOUNT := pLoyProg.VALUE;
     :new.CODE := pLoyProg.CODE;
-    --*** запоминаем, кто и когда изменил документ (’ут можно добавить логирование в отдельную таблицу)
+    --*** Р·Р°РїРѕРјРёРЅР°РµРј, РєС‚Рѕ Рё РєРѕРіРґР° РёР·РјРµРЅРёР» РґРѕРєСѓРјРµРЅС‚ (РўСѓС‚ РјРѕР¶РЅРѕ РґРѕР±Р°РІРёС‚СЊ Р»РѕРіРёСЂРѕРІР°РЅРёРµ РІ РѕС‚РґРµР»СЊРЅСѓСЋ С‚Р°Р±Р»РёС†Сѓ)
     if :new.user_id is null then
       select USER_ID into :new.user_id from USERS where LOGIN = user;
     end if;
