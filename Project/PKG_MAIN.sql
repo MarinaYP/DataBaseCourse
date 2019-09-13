@@ -1,3 +1,4 @@
+    
 create or replace PACKAGE BODY PKG_MAIN AS
 
 --*** Процедура предназначена для вставки или обновления шапки документа DOCS. 
@@ -101,7 +102,7 @@ create or replace PACKAGE BODY PKG_MAIN AS
 
 --*** Переход между состояниями документа
 --*** Возврат документа возможен без возврата по складу ( то есть если документ еще не дошел до стадии изменения складких остатков)
---*** В противном случае изменение складских остатков производится с помощью документа Корректировка
+--*** В противном случае изменение складских остатков производится с помощью документа Корректировка (Только на том же складе! В случае перемещения товара использовать РН - ПН)
 --*** Также есть документы Возврат покупателя и Возврат поставщику
   procedure TransferDocToState(pID DOCS.ID_DOC%type, pIDDocState DOCSTATES.ID_DOC_STATE%type /*ID нового состояния*/, 
                                pUserID USERS.USER_ID%type) as
@@ -111,13 +112,16 @@ create or replace PACKAGE BODY PKG_MAIN AS
     ProdInWH PRODUCTS_IN_WAREHOUSE%rowtype;
     balance number; /*Остаток по строчке документа*/
 	pw_reserve number; /*Количество возможного резерва по данной строчке на складе*/
+	cnt number;
   begin
     begin
       select * into DocRow from DOCS where ID_DOC = pID for update;
       select * into NewDocState from DOC_STATES_TYPES where ID_DOCSTATE = pIDDocState and ID_DOCTYPE = DocRow.ID_DOCTYPE;
       select * into DocType from DOCTYPES where ID_DOCTYPE = DocRow.ID_DOCTYPE;
       
-      --*** меняем состояние документа
+      --*** ТУТ меняем СОСТОЯНИЕ ДОКУМЕНТА 
+	  --*** Отдельным алгоритмом будет регулироваться последовательность состояний каждого документа,
+	  --*** всяческие проверки и подписи, а также перевод в аннулированное состояние из закрытого.
       update DOCS set ID_DOCSTATE = pIDDocState where ID_DOC = pID;
       -------for DOC_DETAILS
 	  --*** для каждой строчки в детализации
@@ -165,7 +169,7 @@ create or replace PACKAGE BODY PKG_MAIN AS
 			return;
 		  end if;
 		  
-		  --*** Находим строчки на складе по Складу в документе, продукту (производитель уже заложен в ID) и по заявленной  документе цене (мы другую не можем выбрать)
+		  --*** Находим строчки на складе по Складу в документе, продукту (производитель уже заложен в ID) и по заявленной в документе цене (мы другую не можем выбрать)
 		  for ss in (select * from PRODUCTS_IN_WAREHOUSE pw where pw.ID_WAREHOUSE = DocRow.ID_WAREHOUSE and pw.ID_PRODUCT = v.ID_PRODUCT
 		               and v.full_price = pw.selling_price order by pw.change_date asc) loop
 			if balance <= 0 then exit; end if;
@@ -178,12 +182,12 @@ create or replace PACKAGE BODY PKG_MAIN AS
 			end if;
 			
 			--*** резервируем количество на складе
-			update PRODUCTS_IN_WAREHOUSE pw set prod_reserve = prod_reserve + pw_reserve where ProdInWH.ID_PROD_WH = ss.ID_PROD_WH;
+			update PRODUCTS_IN_WAREHOUSE pw set prod_reserve = prod_reserve + pw_reserve where pw.ID_PROD_WH = ss.ID_PROD_WH;
 			--*** сразу переводим в резерв в документе
 			update DOC_DETAILS dd set prod_reserve = prod_reserve + pw_reserve where ID_DOCDETAIL = v.ID_DOCDETAIL;
 			--*** заполняем движение товара (таблица как бы отражает по какому документу сколько товара оприходовано или зарезервировано)	
             insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
-			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, pw_reserve /*резерв по документу*/, 
+			  values(ss.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, pw_reserve /*резерв по документу*/, 
 			           0 /*ничего не списано*/, sysdate, pUserID);
 			
 			balance := balance - pw_reserve;
@@ -203,7 +207,10 @@ create or replace PACKAGE BODY PKG_MAIN AS
 		  end if;
 		  --*** выбираем строчки склада с резервом
 		  for ss in (select * from PRODUCTS_IN_WAREHOUSE pw where pw.ID_WAREHOUSE = DocRow.ID_WAREHOUSE and pw.ID_PRODUCT = v.ID_PRODUCT
-		               and v.full_price = pw.selling_price and pw.prod_reserve > 0 order by pw.change_date asc) loop
+		               and v.full_price = pw.selling_price and pw.prod_reserve > 0 
+					   --*** списываем те, что были зарезервированы по этому документу!
+					   and exists (select * from PRODUCTS_MOVING mov where mov.ID_PROD_WH = pw.ID_PROD_WH and mov.ID_DOCDETAIL = v.ID_DOCDETAIL 
+					                 and mov.PROD_RESERVE > 0) order by pw.change_date asc) loop
 					   
 			if balance <= 0 then exit; end if;
 			pw_reserve := 0; --*** сколько по данной строчке склада будет товара
@@ -222,7 +229,7 @@ create or replace PACKAGE BODY PKG_MAIN AS
 			update DOC_DETAILS dd set prod_reserve = prod_reserve - pw_reserve, prod_shipped = prod_shipped + pw_reserve where ID_DOCDETAIL = v.ID_DOCDETAIL;
 			--*** заполняем движение товара (таблица как бы отражает по какому документу сколько товара оприходовано или зарезервировано)	
             insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
-			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, pw_reserve /*резерв по документу*/, 
+			  values(ss.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, pw_reserve /*резерв по документу*/, 
 			           pw_reserve /*списано по идее - столько же, сколько и в резерве*/, sysdate, pUserID);
 			
 			balance := balance - pw_reserve;
@@ -234,9 +241,73 @@ create or replace PACKAGE BODY PKG_MAIN AS
 		    raise_application_error(-20002, 'Не весь товар удалось отгрузить! Осталось догрузить товара: '||balance);
 		  end if;
 		  
-		elsif (DocType.DOCTYPE_CODE = 'Кор')/*с Корректировкой отдельная ветка*/  then
-         
-         null;
+		elsif (NewDocState.IS_FIXED = 'Y') and (DocType.DOCTYPE_CODE = 'Кор')/*с Корректировкой отдельная ветка*/  then
+		--*** С Корректировкой не все так просто: на самом деле, нужен еще флажок, отвечающий какая будет корректировка Прихода или Расхода,
+		--*** но я решила не создавать, а регулировать это так: 
+		--*** если у Корректировки заполнено поле PROD_SHIPPED значит расход и надо списать, если нет - приход и надо оприходовать		  
+		  if v.PROD_SHIPPED > 0 /*списываем*/ then
+		  --*** Причем в Корректировке идет привязка к поставщику, тк скорректировать мы должны ни какой-то товар, а конкретного поставщика!
+		   begin
+		     select * into ProdInWH 
+              from PRODUCTS_IN_WAREHOUSE 
+              where ID_PRODUCT = v.ID_PRODUCT and ID_SUPPLIER /*поставщик*/ = DocRow.ID_PARTNER
+                and ID_WAREHOUSE = DocRow.ID_WAREHOUSE 
+				and PROD_RESERVE = 0 /*Обязательно без резерва! Иначе при изменении цены на товар, изменится цена в документе у клиента!*/for update;
+			 
+             --*** меняем на складе
+			 update PRODUCTS_IN_WAREHOUSE set PROD_COUNT = PROD_COUNT - v.PROD_SHIPPED,
+											  PURCHASE_PRICE = v.PURCHASE_PRICE,
+											  SELLING_PRICE = v.SELLING_PRICE
+	           WHERE ID_PROD_WH = ProdInWH.ID_PROD_WH;
+             --***заполняем движение товара 
+			 insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
+			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, v.PROD_RESERVE /*резерв по документу*/, 
+			           v.PROD_SHIPPED /*списано по идее - столько же, сколько и в резерве*/, sysdate, pUserID);
+             			 
+		   exception
+		    when too_many_rows then
+              rollback;
+              raise_application_error (-20007, 'Произошло задвоение строчек на складе (уч.номер) '||DocRow.ID_WAREHOUSE||
+                  ' с продуктом (уч.номер) '||v.ID_PRODUCT||' и поставщиком (уч.номер)'||DocRow.ID_PARTNER); 
+		    when no_data_found then
+			  rollback;
+              raise_application_error (-20006, 'Нет строчек для возможной корректировк на складе (уч.номер) '||DocRow.ID_WAREHOUSE||
+                  ' с продуктом (уч.номер) '||v.ID_PRODUCT||' и поставщиком (уч.номер)'||DocRow.ID_PARTNER); 
+			when others then
+			  rollback;
+			  raise_application_error(-20008, 'Неизвестная ошибка при Корректировке документа ' ||DocRow.ID_DOC||'(строчка документа: '||v.ID_DOCDETAIL||') ! Обратитесь к разработчикам!');
+           end;		   
+			
+		  else /*приходуем*/
+		    begin
+			  select * into ProdInWH 
+              from PRODUCTS_IN_WAREHOUSE 
+              where ID_PRODUCT = v.ID_PRODUCT and ID_SUPPLIER /*поставщик*/ = DocRow.ID_PARTNER
+                and ID_WAREHOUSE = DocRow.ID_WAREHOUSE for update;
+			   
+			   --*** меняем на складе
+			   update PRODUCTS_IN_WAREHOUSE set PROD_COUNT = PROD_COUNT + v.PROD_COUNT,
+											  PURCHASE_PRICE = v.PURCHASE_PRICE,
+											  SELLING_PRICE = v.SELLING_PRICE
+	           WHERE ID_PROD_WH = ProdInWH.ID_PROD_WH;
+			   --***заполняем движение товара 
+			 insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
+			  values(ProdInWH.ID_PROD_WH, v.ID_DOCDETAIL, v.PROD_COUNT /*Количество товара по документу!*/, v.PROD_RESERVE /*резерв по документу*/, 
+			           v.PROD_SHIPPED /*списано по идее - столько же, сколько и в резерве*/, sysdate, pUserID);	
+			exception
+			  when too_many_rows then
+              rollback;
+              raise_application_error (-20007, 'Произошло задвоение строчек на складе (уч.номер) '||DocRow.ID_WAREHOUSE||
+                  ' с продуктом (уч.номер) '||v.ID_PRODUCT||' и поставщиком (уч.номер)'||DocRow.ID_PARTNER); 
+		      when no_data_found then
+			  rollback;
+              raise_application_error (-20006, 'Нет строчек для возможной корректировк на складе (уч.номер) '||DocRow.ID_WAREHOUSE||
+                  ' с продуктом (уч.номер) '||v.ID_PRODUCT||' и поставщиком (уч.номер)'||DocRow.ID_PARTNER); 
+			  when others then
+			  rollback;
+			  raise_application_error(-20008, 'Неизвестная ошибка при Корректировке документа ' ||DocRow.ID_DOC||'(строчка документа: '||v.ID_DOCDETAIL||') ! Обратитесь к разработчикам!');
+			end;
+		  end if;
         end if;
       end loop; --for v
       commit;
