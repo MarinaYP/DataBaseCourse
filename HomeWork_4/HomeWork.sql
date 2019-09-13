@@ -2,8 +2,8 @@
 --categories
 create index idx_categ_name on categories (name); --поиск по названию категории 
 --doc_details
-create index idx_doc_det_prod_count on doc_details (id_product, prod_count); --самый запрашиваемый товар
-create index idx_doc_det_prod_ship on doc_details (id_product, prod_shipped); --самый продаваемый товар или самый закупаемый
+create index idx_doc_det_prod_count on doc_details (prod_count); --самый запрашиваемый товар
+create index idx_doc_det_prod_ship on doc_details (prod_shipped); --самый продаваемый товар или самый закупаемый
 --docs
 create index idx_docs_doc_numb on docs (doc_number) reverse; --необходим для поиска документов по номеру (номер в виде <префикс>_<номер>)
 --history_prices
