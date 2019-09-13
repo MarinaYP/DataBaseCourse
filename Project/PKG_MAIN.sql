@@ -256,8 +256,8 @@ create or replace PACKAGE BODY PKG_MAIN AS
 			 
              --*** меняем на складе
 			 update PRODUCTS_IN_WAREHOUSE set PROD_COUNT = PROD_COUNT - v.PROD_SHIPPED,
-											  PURCHASE_PRICE = v.PURCHASE_PRICE,
-											  SELLING_PRICE = v.SELLING_PRICE
+											  PURCHASE_PRICE = v.FULL_PRICE,
+											  SELLING_PRICE = v.PRICE_LOYPROG
 	           WHERE ID_PROD_WH = ProdInWH.ID_PROD_WH;
              --***заполняем движение товара 
 			 insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
@@ -287,8 +287,8 @@ create or replace PACKAGE BODY PKG_MAIN AS
 			   
 			   --*** меняем на складе
 			   update PRODUCTS_IN_WAREHOUSE set PROD_COUNT = PROD_COUNT + v.PROD_COUNT,
-											  PURCHASE_PRICE = v.PURCHASE_PRICE,
-											  SELLING_PRICE = v.SELLING_PRICE
+											  PURCHASE_PRICE = v.FULL_PRICE,
+											  SELLING_PRICE = v.PRICE_LOYPROG
 	           WHERE ID_PROD_WH = ProdInWH.ID_PROD_WH;
 			   --***заполняем движение товара 
 			 insert into PRODUCTS_MOVING (ID_PROD_WH, ID_DOCDETAIL, PROD_COUNT, PROD_RESERVE, PROD_SHIPPED, CHANGE_DATE, USER_ID) 
